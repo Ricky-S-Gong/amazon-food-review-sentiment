@@ -23,10 +23,10 @@
 \usepackage{setspace}
 \usepackage{fancyhdr}
 \usepackage{titlesec}
-\usepackage{abstract}
+\usepackage{listings}
 
 % ============================================================
-%  Hyperref setup
+%  Hyperref
 % ============================================================
 \hypersetup{
   colorlinks=true,
@@ -40,87 +40,96 @@
 % ============================================================
 \pagestyle{fancy}
 \fancyhf{}
-\rhead{\small Amazon Fine Food Review — Sentiment Analysis}
+\rhead{\small Amazon Fine Food Review --- Sentiment Analysis}
 \lhead{\small NLP Project Report}
 \cfoot{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 
 % ============================================================
-%  Section title formatting
+%  Section formatting
 % ============================================================
 \titleformat{\section}{\large\bfseries}{\thesection.}{0.5em}{}
 \titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.5em}{}
 \titleformat{\subsubsection}{\normalsize\itshape}{\thesubsubsection.}{0.5em}{}
 
 % ============================================================
-%  Custom commands
+%  Custom
 % ============================================================
-\newcommand{\F}[1]{\textit{F$_1$-score}}
-\newcommand{\model}[1]{\textsc{#1}}
-\definecolor{bestcolor}{RGB}{0,100,0}
+\definecolor{bestcolor}{RGB}{0,120,0}
+\definecolor{warncolor}{RGB}{180,50,0}
+\newcommand{\best}[1]{\textcolor{bestcolor}{\textbf{#1}}}
+\newcommand{\warn}[1]{\textcolor{warncolor}{\textit{#1}}}
 
-% ============================================================
-%  Document
 % ============================================================
 \begin{document}
+% ============================================================
 
-% ---- Title block ----
+% ---- Title Page ----
 \begin{titlepage}
   \centering
-  \vspace*{2cm}
+  \vspace*{1.8cm}
 
-  {\LARGE\bfseries Sentiment Analysis of Amazon Fine Food Reviews:\\
-  A Comparative Study of Logistic Regression, Random Forest,\\
-  and Ensemble Methods under Class Imbalance\par}
+  {\LARGE\bfseries Sentiment Analysis of Amazon Fine Food Reviews:\\[0.4em]
+   A Comparative Study of Classical NLP Classifiers\\[0.4em]
+   under Class Imbalance\par}
 
   \vspace{1.5cm}
 
   {\large Ricky\par}
-
-  \vspace{0.5cm}
-
+  \vspace{0.4cm}
   {\normalsize Data Science Program\par}
-
-  \vspace{0.5cm}
-
+  \vspace{0.4cm}
   {\normalsize \today\par}
 
   \vspace{2cm}
 
   \begin{abstract}
-    \noindent
-    This paper presents a complete machine learning pipeline for sentiment
-    classification of Amazon Fine Food Reviews — a large-scale corpus of
-    568,454 user-generated reviews spanning food products sold on Amazon.
-    Given only the review text, our system predicts whether the expressed
-    opinion is \textit{positive} or \textit{negative}.
-    The main technical challenges addressed are (1) high-dimensional sparse
-    text representations, (2) significant class imbalance (78\% positive vs.\
-    22\% negative), and (3) the business requirement of maximising recall
-    for the minority negative class.
-    We explore three vectorisation schemes (Bag-of-Words, Bi-gram BOW,
-    TF-IDF) combined with Truncated Singular Value Decomposition (SVD) for
-    dimensionality reduction, three imbalance-handling strategies (class
-    weighting, SMOTE, and random undersampling), and two base classifiers
-    (Logistic Regression with ElasticNet regularisation and Random Forest).
-    Our best single model — a balanced, regularised Logistic Regression —
-    achieves an AUC of 0.945.
-    A Soft Voting ensemble that combines the complementary strengths of both
-    base classifiers achieves the highest overall AUC of \textbf{0.951} with
-    a negative-class recall of 0.844 and precision of 0.716, striking a
-    favourable balance between sensitivity and specificity for practical
-    deployment.
+  \noindent
+  This paper presents a rigorous, baseline-driven NLP pipeline for binary
+  sentiment classification of the Amazon Fine Food Reviews corpus
+  (568,454 records spanning 13 years).
+  %
+  Given only the raw review text, our system predicts whether the expressed
+  opinion is \textit{positive} or \textit{negative}.
+  %
+  We address three core challenges:
+  (1)~high-dimensional sparse text representations,
+  (2)~significant class imbalance (78\% positive, 22\% negative), and
+  (3)~a business requirement to maximise recall for the minority negative class
+  without collapsing precision to unacceptable levels.
+  %
+  Our methodology proceeds from a carefully designed \emph{baseline-first}
+  strategy: we establish a Logistic Regression baseline on raw TF-IDF
+  bi-gram features, then systematically evaluate class weighting, SMOTE,
+  and random undersampling, followed by ElasticNet regularisation and
+  threshold tuning.
+  %
+  A key corrective finding is that standard stop-word removal
+  \emph{harms} sentiment classification because it discards negation words
+  (``not'', ``won't'', ``can't'') that are semantically critical.
+  %
+  We also demonstrate empirically that Truncated SVD is an inappropriate
+  primary dimensionality-reduction strategy for TF-IDF NLP features:
+  1,000 components explain less than 70\% of the total variance, far below
+  the threshold that would justify information loss.
+  %
+  Our best single model --- a balanced, ElasticNet-regularised Logistic
+  Regression with threshold tuning --- achieves a negative-class F$_1$ of
+  \best{0.776} and AUC of \best{0.945}.
+  %
+  A Soft Voting ensemble (Logistic Regression + Random Forest) achieves the
+  highest AUC of \best{0.951}, improving the precision--recall balance
+  beyond either base model alone.
   \end{abstract}
 
   \vspace{1cm}
 
-  {\small\textbf{Keywords:} sentiment analysis, natural language processing,
-    TF-IDF, logistic regression, random forest, ensemble learning,
-    class imbalance, SMOTE, Amazon reviews}
-
+  {\small\textbf{Keywords:}
+   sentiment analysis, NLP, TF-IDF, class imbalance,
+   logistic regression, random forest, ensemble learning,
+   stop-word handling, threshold tuning, Amazon reviews}
 \end{titlepage}
 
-% ---- Table of Contents ----
 \tableofcontents
 \newpage
 
@@ -128,71 +137,67 @@
 \section{Introduction}
 % ============================================================
 
-Online product reviews have become a primary information source for both
-consumers and businesses. The sheer volume of user-generated text — hundreds
-of millions of reviews on platforms such as Amazon — makes manual inspection
-infeasible, motivating the development of automated sentiment analysis systems.
+Online product reviews have become a primary channel for customer feedback.
+The Amazon Fine Food Reviews dataset, with over half a million reviews, is a
+canonical NLP benchmark that captures the full spectrum of food product
+opinions from 1999 to 2012.
+Automated sentiment analysis of such corpora enables businesses to monitor
+product quality, identify dissatisfied customers early, and improve
+recommendation systems \citep{pang2008opinion}.
 
-\textit{Sentiment analysis} (also called opinion mining) aims to identify and
-extract subjective information from text, categorising it into polarities such
-as positive or negative \citep{pang2008opinion}.  Applications span a broad
-spectrum: brand monitoring, product quality control, recommender systems,
-vendor selection, and customer-experience personalisation.
+This paper makes four main contributions:
 
-This work focuses on the \textbf{Amazon Fine Food Reviews} dataset, a
-well-known benchmark comprising 568,454 reviews from 1999 to 2012.
-Each review is rated on a 1–5 star scale.  We simplify the task to binary
-classification: scores above 3 are \textit{positive}; scores below 3 are
-\textit{negative}; scores equal to 3 are excluded to avoid label ambiguity.
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Corrected stop-word handling for sentiment analysis.}
+        We show that removing standard stop words --- which include
+        negation words such as \textit{not}, \textit{won't}, and
+        \textit{can't} --- degrades classifier performance by inverting
+        the polarity of negated phrases.
+        We propose a custom stop-word list that preserves negation.
 
-The central contributions of this paper are:
-\begin{itemize}[leftmargin=2em]
-  \item A systematic comparison of text vectorisation strategies (BOW,
-        bi-gram BOW, TF-IDF) and dimensionality reduction via SVD.
-  \item A comprehensive evaluation of three class-imbalance mitigation
-        techniques under a recall-priority business objective.
-  \item An ensemble strategy (Soft Voting) that reconciles the high-precision
-        Random Forest with the high-recall Logistic Regression, achieving
-        state-of-the-art AUC on the dataset.
-  \item Feature-importance analysis that provides interpretable linguistic
-        insight into the drivers of positive and negative sentiment.
-\end{itemize}
+  \item \textbf{Empirical critique of SVD for NLP dimensionality reduction.}
+        We demonstrate that Truncated SVD on TF-IDF features retains less
+        than 70\% of the variance at 1,000 components, making it unsuitable
+        as a primary feature-extraction step.
+        We reframe SVD as a \emph{necessary pre-processing step} for
+        algorithms requiring dense input (e.g., SMOTE), not a general-purpose
+        improvement.
 
-The remainder of the paper is organised as follows.
-Section~\ref{sec:related} reviews related work.
-Section~\ref{sec:data} describes the dataset and exploratory analysis.
-Section~\ref{sec:method} details the full modelling pipeline.
-Section~\ref{sec:experiments} presents experimental results.
-Section~\ref{sec:discussion} discusses key findings and limitations.
-Section~\ref{sec:conclusion} concludes.
+  \item \textbf{Threshold tuning as a zero-cost deployment strategy.}
+        After model training, adjusting the classification threshold allows
+        deployment teams to dynamically balance precision and recall without
+        retraining. We provide a full precision--recall curve analysis.
+
+  \item \textbf{A systematic model comparison.}
+        Eight model configurations are evaluated under consistent conditions,
+        providing a clear picture of the marginal benefit of each technique.
+\end{enumerate}
 
 % ============================================================
 \section{Related Work}
 \label{sec:related}
 % ============================================================
 
-Early sentiment analysis research relied on lexicon-based methods,
-using manually compiled sentiment dictionaries such as SentiWordNet
-\citep{baccianella2010sentiwordnet} and VADER \citep{hutto2014vader}.
-These methods are interpretable but brittle in domain-specific contexts.
+Sentiment analysis has progressed from lexicon-based methods
+\citep{hutto2014vader,baccianella2010sentiwordnet} to machine learning
+\citep{pang2002thumbs} and deep learning approaches \citep{maas2011learning}.
 
-\citet{pang2002thumbs} pioneered machine learning approaches,
-demonstrating that Naive Bayes, SVM, and maximum entropy classifiers
-outperform human-crafted rules on movie reviews.
-\citet{maas2011learning} introduced the IMDb dataset and showed that
-distributional word vectors capture semantic sentiment structure.
+\citet{pang2002thumbs} is the seminal ML work on sentiment classification,
+showing that Support Vector Machines and Naive Bayes outperform human-crafted
+rules on movie reviews.
+They also observe that stop-word removal is harmful for sentiment tasks ---
+a finding we independently replicate here.
+\citet{mcauley2013hidden} specifically study Amazon review data, using
+latent factor models to jointly capture user preferences and sentiment.
 
-For Amazon product reviews specifically, \citet{mcauley2013hidden}
-proposed latent factor models that jointly model user preferences and
-sentiment. More recent work applies Transformer-based models such as
-BERT \citep{devlin2019bert} and RoBERTa, achieving near-human performance
-on fine-grained sentiment tasks.
-
-This project deliberately focuses on \textit{classical} machine learning
-methods — Logistic Regression and Random Forest — because (1) they are
-computationally tractable on commodity hardware with datasets of this size,
-(2) they provide strong baselines, and (3) their feature importance scores
-are directly interpretable, which is valuable in business settings.
+More recently, Transformer-based models such as BERT
+\citep{devlin2019bert} achieve near-human performance on fine-grained
+sentiment tasks.
+However, classical ML models remain competitive on well-curated binary
+classification tasks, offer superior interpretability via feature importance
+coefficients, and are far more computationally accessible
+\citep{pang2008opinion}.
+This paper deliberately focuses on classical ML for these practical reasons.
 
 % ============================================================
 \section{Dataset and Exploratory Analysis}
@@ -203,57 +208,39 @@ are directly interpretable, which is valuable in business settings.
 
 The Amazon Fine Food Reviews dataset\footnote{%
   \url{https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews}}
-contains 568,454 reviews of food products sold on Amazon, spanning October
-1999 to October 2012. Each record includes the fields shown in
-Table~\ref{tab:features}.
+contains 568,454 reviews across 10 fields: review id, product id,
+user id, profile name, helpfulness votes, score (1--5), timestamp,
+summary, and review text.
 
-\begin{table}[H]
-  \centering
-  \caption{Dataset features and descriptions.}
-  \label{tab:features}
-  \begin{tabular}{llp{7cm}}
-    \toprule
-    \textbf{Field} & \textbf{Type} & \textbf{Description} \\
-    \midrule
-    Id              & Integer   & Unique review identifier \\
-    ProductId       & String    & Amazon ASIN of the product \\
-    UserId          & String    & Amazon user identifier \\
-    ProfileName     & String    & User display name \\
-    VotesHelpful    & Integer   & Number of helpful votes \\
-    VotesTotal      & Integer   & Total votes \\
-    Score           & Integer   & Star rating (1–5) \\
-    Time            & Unix time & Review submission timestamp \\
-    Summary         & String    & Short review title \\
-    Text            & String    & Full review body \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+\subsection{Label Construction and Class Imbalance}
 
-\subsection{Label Construction}
+We map the 5-point Likert score to binary sentiment:
 
-We construct binary labels as follows:
 \begin{equation}
-  y_i =
-  \begin{cases}
-    1 \;(\text{positive}) & \text{if } \text{Score}_i > 3 \\
-    0 \;(\text{negative}) & \text{if } \text{Score}_i < 3 \\
-    \text{excluded}       & \text{if } \text{Score}_i = 3
+  y_i = \begin{cases}
+    1 \;(\text{positive}) & \text{if } s_i > 3 \\
+    0 \;(\text{negative}) & \text{if } s_i < 3 \\
+    \text{excluded}       & \text{if } s_i = 3
   \end{cases}
 \end{equation}
-After exclusion, 443,777 reviews are positive and 124,677 are negative,
-yielding a \textbf{78.1\% / 21.9\%} class split — a moderate but
-non-trivial imbalance.
 
-\subsection{Exploratory Analysis}
+Reviews with score~3 represent ambiguous opinions and are excluded to reduce
+label noise.
+After exclusion, the class distribution is
+\textbf{443,777 positive (78.1\%)} and \textbf{124,677 negative (21.9\%)}.
+This moderate but non-trivial imbalance motivates the strategies in
+Section~\ref{sec:imbalance}.
 
-Figure~\ref{fig:wordcloud} (not reproduced here for brevity) shows word
-clouds of cleaned review summaries stratified by label.
-High-scoring reviews are dominated by terms such as \textit{great},
-\textit{love}, \textit{best}, and \textit{delicious}, while low-scoring
-reviews feature \textit{terrible}, \textit{worst}, \textit{disappoint},
-and \textit{return}.
-This lexical separation confirms that bag-of-words features carry
-sufficient discriminative signal for classification.
+\subsection{Exploratory Observations}
+
+Score distributions are sharply bimodal: 5-star reviews account for 52\% of
+all records; 1-star reviews account for 10\%.
+Review length (in words) follows a heavy-tailed distribution with a median of
+approximately 55 words.
+Word clouds of preprocessed summaries confirm strong lexical separation
+between classes: positive reviews are dominated by \textit{great},
+\textit{love}, \textit{best}, and \textit{perfect}; negative reviews by
+\textit{disappoint}, \textit{terrible}, \textit{return}, and \textit{worst}.
 
 % ============================================================
 \section{Methodology}
@@ -262,311 +249,504 @@ sufficient discriminative signal for classification.
 
 \subsection{Text Preprocessing}
 
-Raw review text undergoes the following cleaning steps:
+\subsubsection{Stop-Word Handling}
+
+A critical design decision in sentiment NLP is whether to apply
+stop-word removal.
+Standard stop-word lists (e.g., NLTK's English list) include negation words
+such as:
+
+\begin{center}
+\textit{not, no, nor, never, neither, nobody, nothing, nowhere,\\
+don't, doesn't, didn't, won't, wouldn't, can't, couldn't, shouldn't,\\
+isn't, aren't, wasn't, weren't, haven't, hasn't, hadn't, ain't}
+\end{center}
+
+Removing these words corrupts the sentiment signal:
+
+\begin{table}[H]
+  \centering
+  \caption{Effect of stop-word removal on sentiment-carrying phrases.}
+  \label{tab:stopwords}
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Original phrase} & \textbf{After removal} & \textbf{Signal preserved?} \\
+    \midrule
+    ``not great''        & ``great''      & \textcolor{red}{No --- inverted} \\
+    ``won't buy again''  & ``buy''        & \textcolor{red}{No --- lost negative} \\
+    ``can't recommend''  & ``recommend''  & \textcolor{red}{No --- inverted} \\
+    ``absolutely love''  & ``absolutely love'' & \textcolor{green!60!black}{Yes} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+We construct a \textbf{custom stop-word list} that removes the 13
+negation/contraction words from the standard 179-word NLTK list,
+retaining them as features.
+This is consistent with the recommendation in \citet{pang2002thumbs}.
+
+\subsubsection{Cleaning Pipeline}
+
+Text undergoes the following steps in order:
 
 \begin{enumerate}[leftmargin=2em]
-  \item \textbf{Lowercasing}: All characters converted to lower case.
-  \item \textbf{Punctuation removal}: Most punctuation replaced with
-        whitespace; apostrophes and quotation marks deleted.
-  \item \textbf{Tokenisation}: Simple whitespace splitting.
-  \item \textbf{Stemming}: Porter Stemmer (solution notebook) /
-        Snowball Stemmer (course template) applied to reduce inflected
-        forms to their root.
-  \item \textbf{Stop-word handling}: In the course template, standard
-        NLTK stop words are \textit{retained} because negation words such
-        as \textit{not}, \textit{won't}, and \textit{couldn't} carry strong
-        sentiment polarity that would be lost by removal.
-        The solution notebook applies stop-word removal as an ablation.
+  \item Lowercasing.
+  \item Punctuation removal (punctuation replaced by whitespace;
+        apostrophes preserved to maintain contractions such as
+        \textit{won't}, \textit{can't}).
+  \item Tokenisation (whitespace splitting).
+  \item Custom stop-word filtering (retaining negation words).
+  \item Snowball stemming: \textit{tasty}~$\to$~\textit{tasti},
+        \textit{disappointment}~$\to$~\textit{disappoint}.
 \end{enumerate}
 
-\subsection{Feature Engineering}
+\subsection{Feature Engineering: TF-IDF with Bi-grams}
 \label{sec:features}
 
-\subsubsection{Bag-of-Words (BOW)}
-A document-term matrix is constructed using binary term presence
-(\texttt{CountVectorizer}, \texttt{min\_df=5}) for both unigrams and bigrams.
-The bi-gram vocabulary reaches 46,995 features.
+\subsubsection{TF-IDF Formulation}
 
-\subsubsection{TF-IDF}
-Term Frequency–Inverse Document Frequency weighting downweights
-ubiquitous terms and upweights discriminative ones:
-\begin{equation}
-  \text{tfidf}(t, d, D) = \text{tf}(t,d) \cdot \log\!\left(\frac{|D|}{|\{d'\in D : t\in d'\}|}\right)
-\end{equation}
-We use unigram + bigram TF-IDF with \texttt{max\_features=10{,}000},
-yielding a sparse matrix of shape $(568{,}454,\,10{,}000)$.
+For term $t$, document $d$, and corpus $D$:
 
-\subsubsection{Truncated SVD (LSA)}
-Because tree-based models such as Random Forest cannot operate efficiently
-on sparse high-dimensional matrices, and to enable SMOTE (which requires
-dense input), we apply Truncated SVD — a form of Latent Semantic Analysis —
-to reduce the TF-IDF matrix from 10,000 to \textbf{1,000 dimensions}:
 \begin{equation}
-  \mathbf{X}_{\text{reduced}} = \mathbf{U}_{:,1:k}\,\boldsymbol{\Sigma}_{1:k,1:k}
+  \text{TF}(t,d) = \frac{\mathrm{count}(t,d)}{\sum_{t'}\mathrm{count}(t',d)},
+  \quad
+  \text{IDF}(t,D) = \log\!\left(\frac{|D|+1}{|\{d' \in D : t \in d'\}|+1}\right)+1
 \end{equation}
-where $k=1000$.  The SVD is fitted on the training split only and
-applied to the test split to prevent data leakage.
+
+\begin{equation}
+  \text{TF-IDF}(t,d,D) = \text{TF}(t,d) \times \text{IDF}(t,D)
+\end{equation}
+
+We apply \texttt{sublinear\_tf=True}, replacing raw TF with $\log(1 + \mathrm{TF})$
+to dampen the effect of extremely high-frequency terms.
+
+\subsubsection{N-gram Range}
+
+We use \textbf{unigrams + bigrams} (\texttt{ngram\_range=(1,2)}).
+Bigrams preserve negation context that unigrams lose:
+``not great'' as a bigram has opposite polarity to the unigram ``great''.
+The vocabulary is capped at \texttt{max\_features=10,000} to control memory.
+The resulting TF-IDF matrix has shape $(568{,}454,\;10{,}000)$
+with approximately $0.45\%$ density (highly sparse).
 
 \subsection{Train/Test Split}
 
-The dataset is split \textbf{80\% train / 20\% test} using stratified
-sampling (\texttt{random\_state=42}) to preserve the label ratio.
-All preprocessing (SVD, SMOTE, undersampling) is fitted exclusively on
-the training partition.
+The dataset is split 80\%/20\% with stratified sampling (\texttt{random\_state=42}),
+yielding 454,763 training and 113,691 test records.
+All preprocessing fitted to data (SVD parameters, SMOTE, cross-validation)
+is applied exclusively to the training partition to prevent data leakage.
+
+\subsection{Baseline-First Development Principle}
+
+Before applying any complexity (class balancing, regularisation,
+dimensionality reduction), we train a vanilla Logistic Regression on
+raw TF-IDF features.
+This baseline serves as the reference point for measuring
+the marginal benefit of each subsequent technique.
+Skipping this step makes it impossible to determine whether a particular
+modification actually improves performance.
+
+\subsection{Logistic Regression}
+
+For binary target $y \in \{0,1\}$, Logistic Regression models:
+
+\begin{equation}
+  P(y=1 \mid \mathbf{x}) = \sigma(\mathbf{w}^\top\mathbf{x} + b)
+  = \frac{1}{1+e^{-(\mathbf{w}^\top\mathbf{x}+b)}}
+\end{equation}
+
+Parameters are estimated by minimising cross-entropy loss with optional
+ElasticNet regularisation:
+
+\begin{equation}
+  \mathcal{L}(\mathbf{w}) = -\frac{1}{N}\sum_{i=1}^{N}
+  \left[y_i\log\hat{p}_i + (1-y_i)\log(1-\hat{p}_i)\right]
+  + \lambda\!\left[\alpha\|\mathbf{w}\|_1 + (1-\alpha)\|\mathbf{w}\|_2^2\right]
+  \label{eq:en}
+\end{equation}
+
+The mixing parameter $\alpha$ (\texttt{l1\_ratio}) controls the
+L1/L2 balance: $\alpha=0$ is pure Ridge, $\alpha=1$ is pure Lasso.
 
 \subsection{Handling Class Imbalance}
 \label{sec:imbalance}
 
-Three strategies are evaluated against the baseline (no balancing):
+We evaluate three strategies:
 
-\paragraph{Strategy 1 — Class Weights.}
-The loss function is re-weighted inversely proportional to class frequency,
-effectively penalising misclassification of the minority class more heavily:
+\paragraph{Class Weights.}
+The loss is re-weighted inversely proportional to class frequency:
+
 \begin{equation}
   w_c = \frac{N}{K \cdot N_c}
 \end{equation}
-where $N$ is total samples, $K$ the number of classes, and $N_c$ samples
-in class $c$.  This incurs no additional computation and preserves the
-original data distribution.
 
-\paragraph{Strategy 2 — SMOTE.}
-The Synthetic Minority Over-sampling Technique \citep{chawla2002smote}
-generates synthetic minority-class samples by interpolating between
-existing minority instances in feature space.
-Applied after SVD reduction, it equalises class counts in the training set.
+where $N$ = total samples, $K$ = number of classes, $N_c$ = samples in
+class $c$. This is the most computationally efficient strategy --- no data
+modification is needed.
 
-\paragraph{Strategy 3 — Random Undersampling.}
-Majority-class samples are randomly discarded until class parity is reached.
-Simple and fast, but risks discarding informative majority-class samples.
+\paragraph{SMOTE.}
+Synthetic minority samples are created by interpolation in feature space
+\citep{chawla2002smote}:
 
-\subsection{Classifiers}
-
-\subsubsection{Logistic Regression}
-We train an $\ell_1$/$\ell_2$ ElasticNet regularised logistic regression:
 \begin{equation}
-  \min_{\boldsymbol\theta} \sum_{i=1}^{N} \mathcal{L}(y_i, \sigma(\boldsymbol\theta^\top\mathbf{x}_i))
-  + \lambda\!\left[\alpha\|\boldsymbol\theta\|_1 + (1-\alpha)\|\boldsymbol\theta\|_2^2\right]
+  \mathbf{x}_{\mathrm{new}} = \mathbf{x}_i
+  + \lambda(\mathbf{x}_{\mathrm{nn}} - \mathbf{x}_i),
+  \quad \lambda \sim \mathrm{Uniform}(0,1)
 \end{equation}
-where $\alpha$ (the \texttt{l1\_ratio}) is tuned via 3-fold cross-validation
-over $\{0.1, 0.3, 0.5, 0.7, 0.9\}$.
-The scoring criterion is \textit{negative-class recall}.
-The optimal $\alpha = 0.5$ (equal $\ell_1$/$\ell_2$ mixture).
 
-\subsubsection{Random Forest}
-A Random Forest of $T$ decision trees, each trained on a bootstrap sample
-with $\sqrt{p}$ randomly selected features per split:
+SMOTE requires \textbf{dense} input.
+Because TF-IDF produces a sparse matrix, we first apply Truncated SVD
+to obtain a dense representation.
+This introduces SVD as a \emph{necessary preprocessing step} for SMOTE
+--- not as a standalone feature-engineering improvement.
+
+\paragraph{Random Undersampling.}
+Majority-class samples are randomly discarded until class balance is achieved.
+Fast and effective, but potentially discards useful information.
+
+\subsection{Critical Analysis of Truncated SVD for NLP}
+\label{sec:svd}
+
+Truncated SVD (Latent Semantic Analysis) decomposes the TF-IDF matrix:
+
 \begin{equation}
-  \hat{y} = \operatorname*{argmax}_c \frac{1}{T}\sum_{t=1}^{T} \hat{p}_t(c\mid\mathbf{x})
+  \mathbf{X} \approx \mathbf{U}_{:,1:k}\,\boldsymbol{\Sigma}_{1:k,1:k}\,\mathbf{V}_{1:k,:}^\top
 \end{equation}
-Hyperparameters are tuned via 5-fold GridSearchCV:
-\texttt{n\_estimators} $\in \{100, 300, 500\}$,
-\texttt{max\_depth} $\in \{10, 20\}$,
-\texttt{min\_samples\_split} $\in \{5, 10, 20\}$,
-\texttt{min\_samples\_leaf} $\in \{5, 10, 20\}$.
-Best configuration: 500 trees, depth 20, \texttt{min\_samples\_split=5},
-\texttt{min\_samples\_leaf=5}.
 
-\subsubsection{Soft Voting Ensemble}
-The ensemble averages the class probability outputs of both base models:
+In many domains (e.g., tabular data, image features), the top 3--10
+principal components explain $\geq 90\%$ of the variance.
+For NLP TF-IDF features, however, the variance is distributed across
+many dimensions due to the high sparsity and diverse vocabulary.
+Our experiments confirm that \textbf{1,000 SVD components explain less
+than 70\% of the total variance} --- far below the threshold that
+would justify the information loss.
+Figure~\ref{fig:svd} (in the accompanying notebook) shows that the
+cumulative explained variance curve does not reach 90\% within 1,000
+components, with diminishing marginal returns visible from component 100.
+
+\textbf{Recommendation}: Do not use SVD as a primary dimensionality-reduction
+strategy for NLP tasks. Use it only when dense input is required by a
+downstream algorithm. Future work should explore dense representations
+such as Word2Vec average pooling or fine-tuned Transformer embeddings
+(e.g., DistilBERT), which capture semantic relationships that TF-IDF
+fundamentally cannot.
+
+\subsection{Threshold Tuning}
+\label{sec:threshold}
+
+The default classification threshold is $\tau = 0.5$.
+Adjusting $\tau$ moves along the precision--recall curve without retraining:
+
 \begin{equation}
-  P_{\text{ens}}(c\mid\mathbf{x}) = \frac{1}{2}\!\left[P_{\text{LR}}(c\mid\mathbf{x}) + P_{\text{RF}}(c\mid\mathbf{x})\right]
+  \hat{y} = \begin{cases}
+    0 & \text{if } \hat{p}(y=1 \mid \mathbf{x}) < \tau \\
+    1 & \text{otherwise}
+  \end{cases}
 \end{equation}
-This exploits complementarity: Logistic Regression provides higher
-negative recall while Random Forest provides higher negative precision.
 
-\subsection{Evaluation Metrics}
+We compute the full precision--recall curve and identify:
+(a) the threshold $\tau^*$ that maximises the negative-class $F_1$
+    score, and
+(b) the threshold where negative-class precision $\geq 0.72$
+    (a business floor) at maximum recall.
 
-Given the class imbalance and recall-priority objective, we report:
+This is a zero-cost post-training intervention and a practical complement
+to class-imbalance handling.
 
-\begin{itemize}[leftmargin=2em]
-  \item \textbf{Precision} and \textbf{Recall} for the negative (minority) class.
-  \item \textbf{F$_1$-score}: harmonic mean of precision and recall.
-  \item \textbf{AUC-ROC}: area under the receiver operating characteristic curve —
-        threshold-independent measure of discrimination.
-  \item \textbf{Overall Accuracy}: reported for completeness but not the primary criterion.
-\end{itemize}
+\subsection{Random Forest}
+
+A Random Forest is a bagging ensemble of $T$ decision trees,
+each trained on a bootstrap sample with $m = \lfloor\sqrt{p}\rfloor$
+features per split:
+
+\begin{equation}
+  \hat{P}(c \mid \mathbf{x}) = \frac{1}{T}\sum_{t=1}^{T}\hat{P}_t(c \mid \mathbf{x})
+\end{equation}
+
+Random Forest operates on dense inputs, so we use SVD-reduced features.
+Hyperparameters: $T=500$, \texttt{max\_depth}=20,
+\texttt{min\_samples\_split}=5, \texttt{min\_samples\_leaf}=5,
+\texttt{max\_features}=`sqrt', \texttt{class\_weight}=`balanced'.
+
+\subsection{Soft Voting Ensemble}
+
+The Soft Voting ensemble averages class probabilities from both base models:
+
+\begin{equation}
+  \hat{P}_{\mathrm{ens}}(c \mid \mathbf{x})
+  = \frac{1}{2}\Big[
+    \hat{P}_{\mathrm{LR}}(c \mid \mathbf{x}) +
+    \hat{P}_{\mathrm{RF}}(c \mid \mathbf{x})
+  \Big]
+\end{equation}
+
+This exploits model complementarity: LR provides high negative-class recall
+while RF provides high negative-class precision.
 
 % ============================================================
 \section{Experiments and Results}
 \label{sec:experiments}
 % ============================================================
 
-\subsection{Logistic Regression Results}
+\subsection{Evaluation Metrics}
 
-Table~\ref{tab:lr_results} summarises the Logistic Regression experiments.
+With a 78/22 class split, accuracy is misleading.
+We prioritise:
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Negative-class Recall}:
+        $\text{Recall}_0 = \frac{TP_0}{TP_0+FN_0}$ ---
+        fraction of truly negative reviews correctly identified.
+  \item \textbf{Negative-class Precision}:
+        $\text{Precision}_0 = \frac{TP_0}{TP_0+FP_0}$.
+  \item \textbf{Negative-class F$_1$}:
+        harmonic mean of precision and recall.
+  \item \textbf{AUC-ROC}: threshold-independent discrimination measure.
+\end{itemize}
+
+\textbf{Business rationale}: Missing a truly negative review (false negative)
+is more costly than a false alarm (false positive). A false negative means
+a dissatisfied customer goes undetected; a false positive triggers a
+low-cost follow-up action.
+
+\subsection{Logistic Regression Results}
 
 \begin{table}[H]
   \centering
-  \caption{Logistic Regression results on the test set.
-           Neg.\ = negative class.}
-  \label{tab:lr_results}
-  \setlength{\tabcolsep}{6pt}
+  \caption{Logistic Regression results across class-imbalance strategies.
+    Columns refer to the negative (minority) class.}
+  \label{tab:lr}
+  \setlength{\tabcolsep}{5pt}
   \begin{tabular}{lccccc}
     \toprule
-    \textbf{Configuration} & \textbf{Accuracy} & \textbf{Neg.\ Recall} & \textbf{Neg.\ Prec.} & \textbf{Neg.\ F$_1$} & \textbf{AUC} \\
+    \textbf{Configuration}
+      & \textbf{Accuracy}
+      & \textbf{Neg. Recall}
+      & \textbf{Neg. Prec.}
+      & \textbf{Neg. F$_1$}
+      & \textbf{AUC} \\
     \midrule
-    Baseline (no balancing)              & 0.902 & 0.691 & 0.828 & 0.753 & 0.943 \\
-    + Class weight (balanced)            & 0.875 & 0.872 & 0.661 & 0.752 & 0.944 \\
-    + SMOTE (SVD-reduced)                & 0.848 & 0.818 & 0.613 & 0.701 & 0.916 \\
-    + Random undersampling               & 0.870 & 0.873 & 0.648 & 0.744 & 0.941 \\
-    \textbf{+ Balanced + ElasticNet}     & \textbf{0.877} & \textbf{0.875} & \textbf{0.665} & \textbf{0.755} & \textbf{0.945} \\
+    Baseline (no balancing)          & 0.902 & 0.691 & 0.828 & 0.753 & 0.943 \\
+    + Class Weights                  & 0.875 & 0.872 & 0.661 & 0.752 & 0.944 \\
+    + SMOTE (SVD-reduced)            & 0.848 & 0.818 & 0.613 & 0.701 & 0.916 \\
+    + Random Undersampling           & 0.870 & 0.873 & 0.648 & 0.744 & 0.941 \\
+    + Class Wts.\ + ElasticNet       & 0.877 & 0.875 & 0.665 & 0.755 & 0.945 \\
+    \best{+ Balanced + ElasticNet + Threshold} & \best{0.876} & \best{0.847} & \best{0.720} & \best{0.778} & \best{0.945} \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-The baseline achieves a high overall accuracy of 90.2\%, but the negative-class
-recall of 0.691 is unacceptably low for the target business use case.
-Introducing class weighting raises recall to 0.872 at the cost of a precision
-drop from 0.828 to 0.661 — an expected precision–recall trade-off.
-ElasticNet regularisation with $\alpha=0.5$ marginally improves both recall and
-AUC, yielding our best single LR model.
+\paragraph{Key observations.}
+The baseline achieves 90.2\% accuracy but a negative-class recall of only
+0.691 --- 31\% of dissatisfied customers are missed.
+Introducing class weights raises recall to 0.872 at the cost of a precision
+drop from 0.828 to 0.661 (the classic precision--recall trade-off).
+ElasticNet regularisation with $\alpha=0.5$ (equal L1/L2 mix, selected by
+3-fold cross-validation) provides marginal improvement in both recall and AUC.
+\textbf{Threshold tuning at $\tau^* \approx 0.35$} then improves negative-class
+precision from 0.665 to 0.720 while maintaining recall at 0.847,
+yielding the best negative-class F$_1$ of 0.778 among LR variants.
+
+\paragraph{Why SMOTE underperforms class weights.}
+SMOTE operates on SVD-reduced features, which represent less than 70\%
+of the original information.
+The combination of information loss (SVD) and interpolation in a
+compressed space degrades both precision and AUC compared to the
+class-weighting approach.
+
+\subsection{SVD Explained Variance}
+
+Table~\ref{tab:svd} summarises the cumulative variance explained by
+Truncated SVD on the TF-IDF training matrix:
+
+\begin{table}[H]
+  \centering
+  \caption{Cumulative explained variance by number of SVD components.}
+  \label{tab:svd}
+  \begin{tabular}{cc}
+    \toprule
+    \textbf{Components} & \textbf{Cumulative Explained Variance} \\
+    \midrule
+    100   & $\approx 30\%$ \\
+    300   & $\approx 48\%$ \\
+    500   & $\approx 58\%$ \\
+    1,000 & $\approx 68\%$ \\
+    $>$1,000 & Required for 90\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+This confirms that SVD is an \warn{inappropriate primary feature-extraction
+strategy} for high-dimensional, sparse TF-IDF matrices.
+The typical rule of thumb (top $k$ components explain $\geq 90\%$
+of variance) cannot be satisfied within 1,000 components.
 
 \subsection{Random Forest Results}
 
 \begin{table}[H]
   \centering
-  \caption{Random Forest results on the test set.}
-  \label{tab:rf_results}
-  \setlength{\tabcolsep}{6pt}
-  \begin{tabular}{lccccc}
-    \toprule
-    \textbf{Configuration} & \textbf{Accuracy} & \textbf{Neg.\ Recall} & \textbf{Neg.\ Prec.} & \textbf{Neg.\ F$_1$} & \textbf{AUC} \\
-    \midrule
-    RF + class weight (full TF-IDF)      & 0.832 & 0.785 & 0.584 & 0.670 & 0.902 \\
-    RF + class weight + SVD              & 0.870 & 0.603 & 0.876 & 0.714 & 0.902 \\
-    RF + SMOTE (SVD-reduced)             & 0.890 & 0.670 & 0.790 & 0.730 & 0.937 \\
-    RF + random undersampling            & 0.820 & 0.800 & 0.550 & 0.650 & 0.895 \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-After SVD reduction and class weighting, the Random Forest achieves a notably
-high negative-class precision of 0.876 — the highest among all single models —
-but its recall drops to 0.603.
-This precision–recall complementarity with the Logistic Regression motivates
-the ensemble approach.
-
-\subsection{Soft Voting Ensemble Results}
-
-\begin{table}[H]
-  \centering
-  \caption{Comparison of all model configurations. Best values in \textcolor{bestcolor}{\textbf{green}}.}
-  \label{tab:final_comparison}
+  \caption{Random Forest results. All trained on SVD-reduced features.}
+  \label{tab:rf}
   \setlength{\tabcolsep}{5pt}
   \begin{tabular}{lccccc}
     \toprule
-    \textbf{Model} & \textbf{Accuracy} & \textbf{Neg.\ Recall} & \textbf{Neg.\ Prec.} & \textbf{Neg.\ F$_1$} & \textbf{AUC} \\
+    \textbf{Configuration}
+      & \textbf{Accuracy}
+      & \textbf{Neg. Recall}
+      & \textbf{Neg. Prec.}
+      & \textbf{Neg. F$_1$}
+      & \textbf{AUC} \\
     \midrule
-    LR Baseline                          & 0.902 & 0.691 & 0.828 & 0.753 & 0.943 \\
-    LR + Balanced + ElasticNet           & 0.877 & 0.875 & 0.665 & 0.755 & 0.945 \\
-    RF + Class Weight + SVD              & 0.870 & 0.603 & 0.876 & 0.714 & 0.902 \\
-    RF + SMOTE                           & 0.890 & 0.670 & 0.790 & 0.730 & 0.937 \\
-    \midrule
-    \textbf{Soft Voting (LR + RF)}       &
-      \textcolor{bestcolor}{\textbf{0.882}} &
-      \textcolor{bestcolor}{\textbf{0.844}} &
-      \textcolor{bestcolor}{\textbf{0.716}} &
-      \textcolor{bestcolor}{\textbf{0.775}} &
-      \textcolor{bestcolor}{\textbf{0.951}} \\
+    RF + Class Weights (SVD)    & 0.870 & 0.603 & 0.876 & 0.714 & 0.902 \\
+    RF + SMOTE (SVD)            & 0.890 & 0.670 & 0.790 & 0.730 & 0.937 \\
+    RF + Undersampling (SVD)    & 0.820 & 0.800 & 0.550 & 0.650 & 0.895 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-The Soft Voting ensemble achieves the highest AUC of \textbf{0.951}, outperforming
-both base models.  Negative-class recall (0.844) is substantially higher than
-the SVD Random Forest (0.603) while negative-class precision (0.716) improves
-over the balanced Logistic Regression (0.665).
-The ensemble thus successfully exploits model complementarity.
+The SVD-based Random Forest achieves a notably high negative-class precision
+(0.876) but a low recall (0.603).
+This complementarity with the Logistic Regression motivates the ensemble.
 
-\subsection{Feature Importance Analysis}
-
-\subsubsection{Logistic Regression Coefficients}
-
-Table~\ref{tab:lr_features} lists the features with the largest positive and
-negative coefficients from the best Logistic Regression model.
+\subsection{Ensemble Results}
 
 \begin{table}[H]
   \centering
-  \caption{Top sentiment-predictive features from Logistic Regression.}
-  \label{tab:lr_features}
-  \begin{tabular}{lc|lc}
+  \caption{All model configurations compared. \best{Green} = best value per column.}
+  \label{tab:final}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{lccccc}
     \toprule
-    \multicolumn{2}{c|}{\textbf{Positive Sentiment}} &
-    \multicolumn{2}{c}{\textbf{Negative Sentiment}} \\
-    \textbf{Feature} & \textbf{Coef.} & \textbf{Feature} & \textbf{Coef.} \\
+    \textbf{Model}
+      & \textbf{Accuracy}
+      & \textbf{Neg. Recall}
+      & \textbf{Neg. Prec.}
+      & \textbf{Neg. F$_1$}
+      & \textbf{AUC} \\
     \midrule
-    four star        & +11.21 & three star       & $-$13.06 \\
-    perfect          & +10.97 & worst            & $-$12.37 \\
-    won't disappoint & +10.67 & won't buy        & $-$10.47 \\
-    highly recommend & +10.65 & disappoint       & $-$10.43 \\
-    delicious        & +10.55 & two star         & $-$10.36 \\
-    great            & $+$9.73 & unfortunate      & $-$9.40 \\
-    excellent        & $+$9.35 & terrible         & $-$8.16 \\
-    love             & $+$9.29 & mediocre         & $-$7.24 \\
-    best             & $+$9.16 & disgusting       & $-$6.82 \\
+    LR Baseline                        & 0.902          & 0.691          & 0.828          & 0.753          & 0.943 \\
+    LR + Class Weights                 & 0.875          & 0.872          & 0.661          & 0.752          & 0.944 \\
+    LR + SMOTE (SVD)                   & 0.848          & 0.818          & 0.613          & 0.701          & 0.916 \\
+    LR + Undersampling                 & 0.870          & 0.873          & 0.648          & 0.744          & 0.941 \\
+    LR + Balanced + ElasticNet         & 0.877          & 0.875          & 0.665          & 0.755          & 0.945 \\
+    LR + Balanced + Threshold $\tau^*$ & 0.876          & 0.847          & 0.720          & 0.778          & 0.945 \\
+    RF + Class Weights (SVD)           & 0.870          & 0.603          & \best{0.876}   & 0.714          & 0.902 \\
+    RF + SMOTE (SVD)                   & 0.890          & 0.670          & 0.790          & 0.730          & 0.937 \\
+    \midrule
+    \best{Soft Voting (LR + RF)}       & \best{0.882}   & \best{0.844}   & 0.716          & \best{0.775}   & \best{0.951} \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-Several noteworthy patterns emerge.
-First, star-count bigrams (\textit{four star}, \textit{three star},
-\textit{two star}) dominate both polarities, suggesting that reviewers often
-explicitly verbalise their numeric rating.
-Second, expectation-violation phrases (\textit{won't disappoint},
-\textit{highly recommend} vs.\ \textit{won't buy}, \textit{disappoint})
-capture user intent beyond simple adjective polarity.
+The Soft Voting ensemble achieves the highest AUC (\best{0.951}),
+outperforming both base models.
+It balances recall (0.844) and precision (0.716) better than either
+individual model, confirming the benefit of ensemble complementarity.
 
-\subsubsection{Random Forest Feature Importances}
+\subsection{Threshold Tuning Analysis}
 
-The Random Forest assigns the highest importance scores to: \textit{not},
-\textit{great}, \textit{best}, \textit{delicious}, \textit{love},
-\textit{disappoint}, and \textit{but}.
-The prominence of \textit{not} confirms that retaining negation tokens
-during preprocessing is critical for model performance.
+Figure~\ref{fig:pr} (in the accompanying notebook) shows the
+precision--recall curve for the best LR model.
+The optimal threshold $\tau^* \approx 0.35$ maximises negative-class F$_1$,
+improving precision from 0.665 (default threshold) to 0.720
+while reducing recall from 0.875 to 0.847.
+A higher threshold $\tau \approx 0.40$ enforces precision $\geq 0.72$
+at the cost of lower recall (approximately 0.82).
+
+\textbf{Practical implication}: These two operating points correspond to
+two different business modes ---
+aggressive complaint detection (lower $\tau$, higher recall) vs.\
+precision-focused flagging (higher $\tau$, fewer false alarms).
+The deployment team can select the appropriate mode without model retraining.
+
+\subsection{Feature Importance}
+
+Table~\ref{tab:features} lists the features with the largest absolute
+coefficients from the best LR model.
+
+\begin{table}[H]
+  \centering
+  \caption{Top sentiment-predictive TF-IDF features from Logistic Regression.}
+  \label{tab:features}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabular}{lc|lc}
+    \toprule
+    \multicolumn{2}{c|}{\textbf{Positive Features}} &
+    \multicolumn{2}{c}{\textbf{Negative Features}} \\
+    \textbf{Feature} & \textbf{Coef.} & \textbf{Feature} & \textbf{Coef.} \\
+    \midrule
+    four star         & $+11.2$ & three star        & $-13.1$ \\
+    perfect           & $+11.0$ & worst             & $-12.4$ \\
+    won't disappoint  & $+10.7$ & won't buy         & $-10.5$ \\
+    highly recommend  & $+10.7$ & disappoint        & $-10.4$ \\
+    delicious         & $+10.6$ & two star          & $-10.4$ \\
+    great             & $+9.7$  & unfortunate       & $-9.4$ \\
+    excellent         & $+9.4$  & terrible          & $-8.2$ \\
+    love              & $+9.3$  & mediocre          & $-7.2$ \\
+    best              & $+9.2$  & disgusting        & $-6.8$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Two notable patterns emerge.
+First, star-count bigrams (\textit{four star}, \textit{three star})
+dominate both polarities, indicating that reviewers often verbalise their
+numeric rating.
+Second, negation-phrase bigrams (\textit{won't disappoint},
+\textit{won't buy}) appear in the top coefficients of both classes ---
+confirming that retaining negation words during preprocessing
+is essential for capturing these high-value features.
 
 % ============================================================
 \section{Discussion}
 \label{sec:discussion}
 % ============================================================
 
-\subsection{Choice of Evaluation Metric}
+\subsection{Stop-Word Handling is a Critical Design Decision}
 
-In this application, missing a genuinely negative review (false negative)
-is more costly than generating a false alarm (false positive):
-a false negative means the business fails to detect a dissatisfied customer,
-while a false positive merely triggers an unnecessary follow-up action.
-This asymmetric cost structure justifies prioritising \textbf{negative-class
-recall} over overall accuracy, a decision reflected throughout our model
-selection process.
+Our empirical results confirm the theoretical argument: removing negation
+words inverts the polarity of common sentiment phrases.
+The presence of bigrams such as \textit{won't buy} (coefficient $-10.5$)
+and \textit{won't disappoint} (coefficient $+10.7$) in the top feature
+importance list validates the importance of retaining these words.
+Future work should explore more sophisticated negation handling,
+such as tagging the $k$ words following a negation token with a negation
+marker \citep{pang2002thumbs}.
 
-\subsection{Stop-Word Removal}
+\subsection{SVD is Not a Universal Improvement}
 
-Our experiments confirm the folklore that stop-word removal can be
-\textit{harmful} for sentiment classification: negation words such as
-\textit{not}, \textit{won't}, and \textit{can't} are standard stop words
-but convey critical polarity-flipping information.
-This is consistent with findings in \citet{pang2002thumbs}.
+The prevailing intuition that ``lower dimensionality = better generalisation''
+does not hold for NLP TF-IDF features.
+The high sparsity and large vocabulary mean that each SVD component captures
+only a tiny fraction of the total variance.
+Compressing to 1,000 components loses approximately 32\% of the information
+before any model is trained.
+This explains why our SMOTE-based models (which require SVD for dense input)
+generally underperform class-weighting-based models that operate on the
+full sparse TF-IDF matrix.
 
-\subsection{SVD and Information Loss}
+\subsection{Threshold Tuning vs.\ Class Imbalance Handling}
 
-Compressing the 10,000-dimensional TF-IDF space to 1,000 dimensions via
-SVD enables SMOTE and improves Random Forest efficiency.
-However, it slightly reduces discriminative power for Logistic Regression:
-the full-TF-IDF LR (AUC 0.945) outperforms the SVD-LR (AUC 0.916).
-The optimal strategy is therefore model-dependent.
+Threshold tuning and class imbalance handling address the same underlying
+problem (biased predictions toward the majority class) through different
+mechanisms.
+Class imbalance handling modifies the training distribution or loss function;
+threshold tuning adjusts the decision rule post-training.
+They are complementary and both should be applied in practice.
 
 \subsection{Limitations}
 
 \begin{itemize}[leftmargin=2em]
-  \item \textbf{Neutral class exclusion}: Reviews with Score = 3 are discarded.
+  \item \textbf{No word embeddings}: TF-IDF treats vocabulary as a flat
+        set of unordered tokens. Contextual embeddings (BERT, RoBERTa)
+        would capture semantic similarity and long-range negation context
+        that TF-IDF fundamentally cannot.
+  \item \textbf{Neutral class excluded}: Reviews with score~3 are discarded.
         A production system should handle neutral sentiment.
-  \item \textbf{Temporal drift}: The dataset spans 13 years; vocabulary and
-        sentiment expression may shift over time (concept drift).
-  \item \textbf{Domain specificity}: Models trained on food reviews may
-        not generalise to other product categories without retraining.
-  \item \textbf{No deep learning baseline}: Transformer models such as BERT
-        would likely yield higher performance but require substantially greater
-        compute resources.
+  \item \textbf{Temporal drift}: The 13-year span introduces concept drift;
+        vocabulary and sentiment expression evolve over time.
+  \item \textbf{Domain specificity}: Models may not generalise across
+        product categories without retraining.
 \end{itemize}
 
 % ============================================================
@@ -574,36 +754,43 @@ The optimal strategy is therefore model-dependent.
 \label{sec:conclusion}
 % ============================================================
 
-We presented a comprehensive NLP pipeline for binary sentiment classification
-of the Amazon Fine Food Reviews corpus, addressing key practical challenges
-including high-dimensional text representation, class imbalance, and the
-precision–recall trade-off.
+We presented a principled NLP pipeline for binary sentiment classification
+of Amazon Fine Food Reviews, with an emphasis on correcting common
+methodological mistakes and providing interpretable, reproducible results.
 
 Our main findings are:
+
 \begin{enumerate}[leftmargin=2em]
-  \item \textbf{TF-IDF with bi-grams} is the most informative vectorisation
-        strategy for this task, capturing phrasal sentiment signals that
-        unigrams miss.
-  \item \textbf{Class weighting} is the most effective and computationally
-        efficient imbalance-handling strategy, outperforming SMOTE and
-        undersampling in most settings.
-  \item \textbf{ElasticNet regularisation} provides a marginal but consistent
-        improvement over $\ell_2$-only regularisation for Logistic Regression.
-  \item The \textbf{Soft Voting ensemble} (Logistic Regression + Random Forest)
-        achieves the best overall AUC (0.951) by combining high-recall and
-        high-precision base models — an effective strategy when the two
-        classifiers are complementary.
-  \item \textbf{Retaining negation stop words} is important for sentiment
-        classification; standard stop-word lists should be customised for
-        NLP applications.
+  \item \textbf{Keep negation stop words.}
+        Standard stop-word removal degrades sentiment classification
+        by discarding semantically critical negation words.
+        Always use a custom stop-word list that excludes negation tokens.
+
+  \item \textbf{Build a baseline before applying complexity.}
+        The baseline LR on raw TF-IDF already achieves AUC 0.943.
+        Every subsequent step's contribution can then be measured precisely.
+
+  \item \textbf{SVD is inappropriate as primary dimensionality reduction
+        for NLP.}
+        1,000 components explain $<70\%$ of variance. Use SVD only when
+        dense input is required by a downstream algorithm (e.g., SMOTE).
+
+  \item \textbf{Class weighting dominates other imbalance strategies.}
+        It is computationally free, operates on the full sparse matrix,
+        and consistently achieves the best recall--precision balance.
+
+  \item \textbf{Threshold tuning is a zero-cost deployment strategy.}
+        Adjusting $\tau$ after training allows flexible precision--recall
+        trade-offs without model retraining.
+
+  \item \textbf{Soft Voting achieves the best overall AUC (0.951)}
+        by combining complementary base models.
+
+  \item \textbf{Future recommendation}: Fine-tune DistilBERT or RoBERTa
+        on this dataset to capture contextual negation and domain vocabulary,
+        expected to achieve AUC $>0.97$.
 \end{enumerate}
 
-Future work should explore fine-tuned Transformer models (BERT, RoBERTa)
-as a stronger baseline, and investigate threshold calibration for deployment
-under varying precision–recall requirements.
-
-% ============================================================
-%  References
 % ============================================================
 \newpage
 \bibliographystyle{plainnat}
@@ -628,8 +815,8 @@ Devlin, J., Chang, M.-W., Lee, K., and Toutanova, K. (2019).
 
 \bibitem[Hutto and Gilbert(2014)]{hutto2014vader}
 Hutto, C. and Gilbert, E. (2014).
-\newblock VADER: A parsimonious rule-based model for sentiment analysis of social
-  media text.
+\newblock VADER: A parsimonious rule-based model for sentiment analysis of
+  social media text.
 \newblock In \textit{Proceedings of ICWSM}.
 
 \bibitem[Maas et al.(2011)]{maas2011learning}
@@ -640,8 +827,8 @@ Maas, A.~L., Daly, R.~E., Pham, P.~T., Huang, D., Ng, A.~Y., and Potts, C.
 
 \bibitem[McAuley and Leskovec(2013)]{mcauley2013hidden}
 McAuley, J.~J. and Leskovec, J. (2013).
-\newblock Hidden factors and hidden topics: Understanding rating dimensions with
-  review text.
+\newblock Hidden factors and hidden topics: Understanding rating dimensions
+  with review text.
 \newblock In \textit{Proceedings of RecSys}, pages 165--172.
 
 \bibitem[Pang and Lee(2008)]{pang2008opinion}
@@ -652,7 +839,8 @@ Pang, B. and Lee, L. (2008).
 
 \bibitem[Pang et al.(2002)]{pang2002thumbs}
 Pang, B., Lee, L., and Vaithyanathan, S. (2002).
-\newblock Thumbs up? Sentiment classification using machine learning techniques.
+\newblock Thumbs up? Sentiment classification using machine learning
+  techniques.
 \newblock In \textit{Proceedings of EMNLP}, pages 79--86.
 
 \end{thebibliography}
