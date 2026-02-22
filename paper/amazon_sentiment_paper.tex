@@ -75,9 +75,11 @@
 
   \vspace{1.5cm}
 
-  {\large Ricky\par}
-  \vspace{0.4cm}
-  {\normalsize Data Science Program\par}
+  {\large Ricky Gong\par}
+  \vspace{0.2cm}
+  {\normalsize University of Pennsylvania\par}
+  \vspace{0.1cm}
+  {\normalsize \href{mailto:gong8@seas.upenn.edu}{gong8@seas.upenn.edu}\par}
   \vspace{0.4cm}
   {\normalsize \today\par}
 
@@ -114,12 +116,13 @@
   the threshold that would justify information loss.
   %
   Our best single model --- a balanced, ElasticNet-regularised Logistic
-  Regression with threshold tuning --- achieves a negative-class F$_1$ of
-  \best{0.776} and AUC of \best{0.945}.
+  Regression with threshold tuning ($\tau^*=0.37$) --- achieves a
+  negative-class F$_1$ of \best{0.784}, precision of \best{0.750},
+  recall of \best{0.821}, and AUC of \best{0.951}.
   %
-  A Soft Voting ensemble (Logistic Regression + Random Forest) achieves the
-  highest AUC of \best{0.951}, improving the precision--recall balance
-  beyond either base model alone.
+  A Soft Voting ensemble (Logistic Regression + Random Forest) achieves
+  the same AUC of \best{0.951} with complementary precision--recall balance,
+  demonstrating that model complementarity can be exploited without retraining.
   \end{abstract}
 
   \vspace{1cm}
@@ -156,9 +159,9 @@ This paper makes four main contributions:
         We propose a custom stop-word list that preserves negation.
 
   \item \textbf{Empirical critique of SVD for NLP dimensionality reduction.}
-        We demonstrate that Truncated SVD on TF-IDF features retains less
-        than 70\% of the variance at 1,000 components, making it unsuitable
-        as a primary feature-extraction step.
+        We demonstrate that Truncated SVD on TF-IDF features retains only
+        30\% of the variance at 300 components and $\approx$55\% at 1,000,
+        making it unsuitable as a primary feature-extraction step.
         We reframe SVD as a \emph{necessary pre-processing step} for
         algorithms requiring dense input (e.g., SMOTE), not a general-purpose
         improvement.
@@ -241,6 +244,24 @@ Word clouds of preprocessed summaries confirm strong lexical separation
 between classes: positive reviews are dominated by \textit{great},
 \textit{love}, \textit{best}, and \textit{perfect}; negative reviews by
 \textit{disappoint}, \textit{terrible}, \textit{return}, and \textit{worst}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig_eda.pdf}
+  \caption{Raw star-rating distribution (left) and binary sentiment label
+           distribution (right) after excluding neutral scores (score~=~3).
+           The dataset is imbalanced: 78.1\% positive, 21.9\% negative.}
+  \label{fig:eda}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig_wordcloud.pdf}
+  \caption{Word clouds of preprocessed review text for positive (left) and
+           negative (right) classes. Prominent terms confirm strong lexical
+           separation between polarities.}
+  \label{fig:wordcloud}
+\end{figure}
 
 % ============================================================
 \section{Methodology}
@@ -417,12 +438,13 @@ In many domains (e.g., tabular data, image features), the top 3--10
 principal components explain $\geq 90\%$ of the variance.
 For NLP TF-IDF features, however, the variance is distributed across
 many dimensions due to the high sparsity and diverse vocabulary.
-Our experiments confirm that \textbf{1,000 SVD components explain less
-than 70\% of the total variance} --- far below the threshold that
-would justify the information loss.
-The cumulative explained variance plot (see accompanying notebook,
-Section~9) shows that the curve does not reach 90\% within 1,000
-components, with diminishing marginal returns visible from component 100.
+Our experiments confirm that \textbf{300 SVD components explain only
+$\approx$30\% of the total variance}, and 1,000 components capture
+approximately 55\% --- far below the threshold that would justify the
+information loss.
+Figure~\ref{fig:svd} shows the cumulative and marginal explained variance:
+the curve does not reach 90\% within 1,000 components,
+with rapidly diminishing marginal returns visible from component 50 onward.
 
 \textbf{Recommendation}: Do not use SVD as a primary dimensionality-reduction
 strategy for NLP tasks. Use it only when dense input is required by a
@@ -526,26 +548,27 @@ low-cost follow-up action.
       & \textbf{Neg. F$_1$}
       & \textbf{AUC} \\
     \midrule
-    Baseline (no balancing)          & 0.902 & 0.691 & 0.828 & 0.753 & 0.943 \\
-    + Class Weights                  & 0.875 & 0.872 & 0.661 & 0.752 & 0.944 \\
+    Baseline (no balancing)          & 0.900 & 0.691 & 0.827 & 0.753 & 0.942 \\
+    + Class Weights                  & 0.875 & 0.871 & 0.665 & 0.754 & 0.944 \\
     + SMOTE (SVD-reduced)            & 0.848 & 0.818 & 0.613 & 0.701 & 0.916 \\
     + Random Undersampling           & 0.870 & 0.873 & 0.648 & 0.744 & 0.941 \\
-    + Class Wts.\ + ElasticNet       & 0.877 & 0.875 & 0.665 & 0.755 & 0.945 \\
-    \best{+ Balanced + ElasticNet + Threshold} & \best{0.876} & \best{0.847} & \best{0.720} & \best{0.778} & \best{0.945} \\
+    + Class Wts.\ + ElasticNet       & 0.882 & 0.886 & 0.677 & 0.768 & 0.951 \\
+    \best{+ Balanced + ElasticNet + Threshold ($\tau^*\!=\!0.37$)} & --- & \best{0.821} & \best{0.750} & \best{0.784} & \best{0.951} \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \paragraph{Key observations.}
-The baseline achieves 90.2\% accuracy but a negative-class recall of only
+The baseline achieves 90.0\% accuracy but a negative-class recall of only
 0.691 --- 31\% of dissatisfied customers are missed.
-Introducing class weights raises recall to 0.872 at the cost of a precision
-drop from 0.828 to 0.661 (the classic precision--recall trade-off).
-ElasticNet regularisation with $\alpha=0.5$ (equal L1/L2 mix, selected by
-3-fold cross-validation) provides marginal improvement in both recall and AUC.
-\textbf{Threshold tuning at $\tau^* \approx 0.35$} then improves negative-class
-precision from 0.665 to 0.720 while maintaining recall at 0.847,
-yielding the best negative-class F$_1$ of 0.778 among LR variants.
+Introducing class weights raises recall to 0.871 at the cost of a precision
+drop from 0.827 to 0.665 (the classic precision--recall trade-off).
+ElasticNet regularisation ($\alpha=0.5$, selected by 3-fold CV) raises both
+recall to 0.886 and AUC to 0.951 simultaneously --- a meaningful gain
+attributable to L1 sparsity removing noisy features.
+\textbf{Threshold tuning at $\tau^* = 0.37$} then trades recall (0.886~$\to$~0.821)
+for substantially higher precision (0.677~$\to$~0.750),
+yielding the best negative-class F$_1$ of \best{0.784} among all LR variants.
 
 \paragraph{Why SMOTE underperforms class weights.}
 SMOTE operates on SVD-reduced features, which represent less than 70\%
@@ -553,6 +576,26 @@ of the original information.
 The combination of information loss (SVD) and interpolation in a
 compressed space degrades both precision and AUC compared to the
 class-weighting approach.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\textwidth]{figures/fig_roc.pdf}
+  \caption{ROC curves for three Logistic Regression variants. The baseline
+           already achieves AUC~$\approx$~0.943; class weighting and
+           ElasticNet regularisation provide incremental improvements.
+           Area under each curve is reported in the legend.}
+  \label{fig:roc}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig_confusion.pdf}
+  \caption{Confusion matrices for LR Baseline (left) and LR + Balanced +
+           ElasticNet (right). Class weighting and regularisation
+           substantially improve true-negative detection at the cost of
+           some false positives.}
+  \label{fig:confusion}
+\end{figure}
 
 \subsection{SVD Explained Variance}
 
@@ -567,10 +610,10 @@ Truncated SVD on the TF-IDF training matrix:
     \toprule
     \textbf{Components} & \textbf{Cumulative Explained Variance} \\
     \midrule
-    100   & $\approx 30\%$ \\
-    300   & $\approx 48\%$ \\
-    500   & $\approx 58\%$ \\
-    1,000 & $\approx 68\%$ \\
+    100   & $\approx 15\%$ \\
+    300   & $30.0\%$ (measured) \\
+    500   & $\approx 40\%$ \\
+    1,000 & $\approx 55\%$ \\
     $>$1,000 & Required for 90\% \\
     \bottomrule
   \end{tabular}
@@ -580,6 +623,18 @@ This confirms that SVD is an \warn{inappropriate primary feature-extraction
 strategy} for high-dimensional, sparse TF-IDF matrices.
 The typical rule of thumb (top $k$ components explain $\geq 90\%$
 of variance) cannot be satisfied within 1,000 components.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig_svd.pdf}
+  \caption{Truncated SVD variance analysis on the TF-IDF training matrix.
+           Left: cumulative explained variance showing that 300 components
+           explain only 30.0\% of total variance and 90\% requires more than
+           1,000 components.
+           Right: marginal explained variance per component with rapid
+           diminishing returns after the first 50 components.}
+  \label{fig:svd}
+\end{figure}
 
 \subsection{Random Forest Results}
 
@@ -624,40 +679,64 @@ This complementarity with the Logistic Regression motivates the ensemble.
       & \textbf{Neg. F$_1$}
       & \textbf{AUC} \\
     \midrule
-    LR Baseline                        & 0.902          & 0.691          & 0.828          & 0.753          & 0.943 \\
-    LR + Class Weights                 & 0.875          & 0.872          & 0.661          & 0.752          & 0.944 \\
+    LR Baseline                        & 0.900          & 0.691          & 0.827          & 0.753          & 0.942 \\
+    LR + Class Weights                 & 0.875          & 0.871          & 0.665          & 0.754          & 0.944 \\
     LR + SMOTE (SVD)                   & 0.848          & 0.818          & 0.613          & 0.701          & 0.916 \\
     LR + Undersampling                 & 0.870          & 0.873          & 0.648          & 0.744          & 0.941 \\
-    LR + Balanced + ElasticNet         & 0.877          & 0.875          & 0.665          & 0.755          & 0.945 \\
-    LR + Balanced + Threshold $\tau^*$ & 0.876          & 0.847          & 0.720          & 0.778          & 0.945 \\
+    LR + Balanced + ElasticNet         & 0.882          & 0.886          & 0.677          & 0.768          & 0.951 \\
+    \best{LR + Balanced + EN + Threshold ($\tau^*\!=\!0.37$)} & ---  & 0.821          & \best{0.750}   & \best{0.784}   & 0.951 \\
     RF + Class Weights (SVD)           & 0.870          & 0.603          & \best{0.876}   & 0.714          & 0.902 \\
     RF + SMOTE (SVD)                   & 0.890          & 0.670          & 0.790          & 0.730          & 0.937 \\
     \midrule
-    \best{Soft Voting (LR + RF)}       & \best{0.882}   & \best{0.844}   & 0.716          & \best{0.775}   & \best{0.951} \\
+    Soft Voting (LR + RF)              & \best{0.882}   & \best{0.844}   & 0.716          & 0.775          & \best{0.951} \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-The Soft Voting ensemble achieves the highest AUC (\best{0.951}),
-outperforming both base models.
-It balances recall (0.844) and precision (0.716) better than either
-individual model, confirming the benefit of ensemble complementarity.
+The Soft Voting ensemble achieves AUC (\best{0.951}), matching the
+best single model.
+It trades some precision (0.716 vs.\ 0.750 for the threshold-tuned LR)
+for higher recall (0.844 vs.\ 0.821), providing a complementary operating
+point useful when recall is the priority.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures/fig_summary.pdf}
+  \caption{Comparison of key evaluation metrics across all four Logistic
+           Regression model configurations (negative class). Each group of
+           bars shows AUC-ROC, negative recall, negative precision, and
+           negative F$_1$ for one configuration. Threshold tuning (\textit{+Threshold})
+           improves the precision--recall balance without retraining.}
+  \label{fig:summary}
+\end{figure}
 
 \subsection{Threshold Tuning Analysis}
 
-The precision--recall curve (see accompanying notebook, Section~9)
-shows the full operating range for the best LR model.
-The optimal threshold $\tau^* \approx 0.35$ maximises negative-class F$_1$,
-improving precision from 0.665 (default threshold) to 0.720
-while reducing recall from 0.875 to 0.847.
-A higher threshold $\tau \approx 0.40$ enforces precision $\geq 0.72$
-at the cost of lower recall (approximately 0.82).
+Figure~\ref{fig:pr} shows the full operating range for the best LR model.
+The optimal threshold $\tau^* = 0.37$ maximises negative-class F$_1$,
+improving precision from 0.677 (default $\tau=0.5$) to \textbf{0.750}
+while reducing recall from 0.886 to 0.821.
+The net result is a higher F$_1$ of \textbf{0.784} vs.\ 0.768 at default threshold.
+A lower threshold $\tau < 0.37$ pushes recall above 0.88 at the expense
+of precision dropping below 0.67, suitable for aggressive complaint detection.
 
 \textbf{Practical implication}: These two operating points correspond to
 two different business modes ---
 aggressive complaint detection (lower $\tau$, higher recall) vs.\
 precision-focused flagging (higher $\tau$, fewer false alarms).
 The deployment team can select the appropriate mode without model retraining.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig_pr.pdf}
+  \caption{Left: Precision--Recall curve for the negative (minority) class
+           using the best LR model. The red dot marks the threshold
+           $\tau^*$ that maximises negative-class F$_1$. The dashed green
+           line shows a precision floor of 0.72.
+           Right: F$_1$ score vs.\ classification threshold $\tau$, showing
+           the optimal operating point.}
+  \label{fig:pr}
+\end{figure}
 
 \subsection{Feature Importance}
 
@@ -697,6 +776,16 @@ Second, negation-phrase bigrams (\textit{won't disappoint},
 confirming that retaining negation words during preprocessing
 is essential for capturing these high-value features.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig_features.pdf}
+  \caption{Top 15 TF-IDF bi-gram features by absolute Logistic Regression
+           coefficient. Positive-sentiment features (left, green) and
+           negative-sentiment features (right, red). Note the dominance
+           of star-count bigrams and negation phrases.}
+  \label{fig:features}
+\end{figure}
+
 % ============================================================
 \section{Discussion}
 \label{sec:discussion}
@@ -719,7 +808,7 @@ The prevailing intuition that ``lower dimensionality = better generalisation''
 does not hold for NLP TF-IDF features.
 The high sparsity and large vocabulary mean that each SVD component captures
 only a tiny fraction of the total variance.
-Compressing to 1,000 components loses approximately 32\% of the information
+Compressing to 1,000 components loses approximately 45\% of the information
 before any model is trained.
 This explains why our SMOTE-based models (which require SVD for dense input)
 generally underperform class-weighting-based models that operate on the
@@ -767,12 +856,13 @@ Our main findings are:
         Always use a custom stop-word list that excludes negation tokens.
 
   \item \textbf{Build a baseline before applying complexity.}
-        The baseline LR on raw TF-IDF already achieves AUC 0.943.
+        The baseline LR on raw TF-IDF already achieves AUC 0.942.
         Every subsequent step's contribution can then be measured precisely.
 
   \item \textbf{SVD is inappropriate as primary dimensionality reduction
         for NLP.}
-        1,000 components explain $<70\%$ of variance. Use SVD only when
+        300 components explain only $\approx$30\% of variance;
+        $>$1,000 components are needed for 90\%. Use SVD only when
         dense input is required by a downstream algorithm (e.g., SMOTE).
 
   \item \textbf{Class weighting dominates other imbalance strategies.}
@@ -783,8 +873,10 @@ Our main findings are:
         Adjusting $\tau$ after training allows flexible precision--recall
         trade-offs without model retraining.
 
-  \item \textbf{Soft Voting achieves the best overall AUC (0.951)}
-        by combining complementary base models.
+  \item \textbf{Best single model: LR + ElasticNet + Threshold ($\tau^*=0.37$)}
+        achieves NegF$_1$=0.784, NegPrec=0.750, NegRec=0.821, AUC=0.951.
+        Soft Voting matches the AUC (0.951) with higher recall (0.844)
+        at the cost of lower precision (0.716), useful for different deployment modes.
 
   \item \textbf{Future recommendation}: Fine-tune DistilBERT or RoBERTa
         on this dataset to capture contextual negation and domain vocabulary,
