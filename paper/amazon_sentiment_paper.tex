@@ -420,8 +420,8 @@ many dimensions due to the high sparsity and diverse vocabulary.
 Our experiments confirm that \textbf{1,000 SVD components explain less
 than 70\% of the total variance} --- far below the threshold that
 would justify the information loss.
-Figure~\ref{fig:svd} (in the accompanying notebook) shows that the
-cumulative explained variance curve does not reach 90\% within 1,000
+The cumulative explained variance plot (see accompanying notebook,
+Section~9) shows that the curve does not reach 90\% within 1,000
 components, with diminishing marginal returns visible from component 100.
 
 \textbf{Recommendation}: Do not use SVD as a primary dimensionality-reduction
@@ -645,8 +645,8 @@ individual model, confirming the benefit of ensemble complementarity.
 
 \subsection{Threshold Tuning Analysis}
 
-Figure~\ref{fig:pr} (in the accompanying notebook) shows the
-precision--recall curve for the best LR model.
+The precision--recall curve (see accompanying notebook, Section~9)
+shows the full operating range for the best LR model.
 The optimal threshold $\tau^* \approx 0.35$ maximises negative-class F$_1$,
 improving precision from 0.665 (default threshold) to 0.720
 while reducing recall from 0.875 to 0.847.

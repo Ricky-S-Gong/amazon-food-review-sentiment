@@ -38,7 +38,7 @@ venv/
 *.swp
 *.swo
 
-# LaTeX build artifacts
+# LaTeX build artifacts (keep PDF, ignore aux files)
 paper/*.aux
 paper/*.log
 paper/*.out
@@ -50,7 +50,6 @@ paper/*.blg
 paper/*.fls
 paper/*.fdb_latexmk
 paper/*.synctex.gz
-paper/*.pdf
 
 # Claude internal
 .claude/
