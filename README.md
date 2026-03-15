@@ -61,7 +61,8 @@ amazon-food-review-sentiment/
 | Method | Description |
 |---|---|
 | TF-IDF | 1–2 gram, `max_features=10,000` |
-| TruncatedSVD | Dimensionality reduction (for SMOTE and RF) |
+| TruncatedSVD | Dimensionality reduction on TF-IDF (for SMOTE and RF) |
+| Word2Vec | Skip-gram, 300d, window=5; document vectors via average pooling — captures semantic similarity that TF-IDF misses |
 
 #### 3. Class Imbalance Strategies
 
@@ -185,7 +186,8 @@ amazon-food-review-sentiment/
 
 #### 特征工程
 - TF-IDF（1–2 gram，max_features=10,000）
-- TruncatedSVD 降维（用于 SMOTE 和随机森林）
+- TruncatedSVD — 对 TF-IDF 降维（用于 SMOTE 和随机森林）
+- Word2Vec — Skip-gram，300 维，window=5；通过平均池化生成文档向量，捕捉 TF-IDF 无法体现的语义相似性
 
 #### 标签不平衡处理
 | 策略 | 负类 Recall | 负类 Precision | AUC |
