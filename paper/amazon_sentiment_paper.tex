@@ -538,7 +538,7 @@ low-cost follow-up action.
   \caption{Logistic Regression results across class-imbalance strategies.
     Columns refer to the negative (minority) class.}
   \label{tab:lr}
-  \setlength{\tabcolsep}{5pt}
+  \resizebox{\textwidth}{!}{%
   \begin{tabular}{lccccc}
     \toprule
     \textbf{Configuration}
@@ -555,7 +555,7 @@ low-cost follow-up action.
     + Class Wts.\ + ElasticNet       & 0.882 & 0.886 & 0.677 & 0.768 & 0.951 \\
     \best{+ Balanced + ElasticNet + Threshold ($\tau^*\!=\!0.37$)} & --- & \best{0.821} & \best{0.750} & \best{0.784} & \best{0.951} \\
     \bottomrule
-  \end{tabular}
+  \end{tabular}}
 \end{table}
 
 \paragraph{Key observations.}
@@ -642,7 +642,7 @@ of variance) cannot be satisfied within 1,000 components.
   \centering
   \caption{Random Forest results. All trained on SVD-reduced features.}
   \label{tab:rf}
-  \setlength{\tabcolsep}{5pt}
+  \resizebox{\textwidth}{!}{%
   \begin{tabular}{lccccc}
     \toprule
     \textbf{Configuration}
@@ -656,7 +656,7 @@ of variance) cannot be satisfied within 1,000 components.
     RF + SMOTE (SVD)            & 0.890 & 0.670 & 0.790 & 0.730 & 0.937 \\
     RF + Undersampling (SVD)    & 0.820 & 0.800 & 0.550 & 0.650 & 0.895 \\
     \bottomrule
-  \end{tabular}
+  \end{tabular}}
 \end{table}
 
 The SVD-based Random Forest achieves a notably high negative-class precision
@@ -669,7 +669,7 @@ This complementarity with the Logistic Regression motivates the ensemble.
   \centering
   \caption{All model configurations compared. \best{Green} = best value per column.}
   \label{tab:final}
-  \setlength{\tabcolsep}{4pt}
+  \resizebox{\textwidth}{!}{%
   \begin{tabular}{lccccc}
     \toprule
     \textbf{Model}
@@ -690,7 +690,7 @@ This complementarity with the Logistic Regression motivates the ensemble.
     \midrule
     Soft Voting (LR + RF)              & \best{0.882}   & \best{0.844}   & 0.716          & 0.775          & \best{0.951} \\
     \bottomrule
-  \end{tabular}
+  \end{tabular}}
 \end{table}
 
 The Soft Voting ensemble achieves AUC (\best{0.951}), matching the
