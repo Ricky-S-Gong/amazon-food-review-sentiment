@@ -8,7 +8,7 @@
 
 ### Overview
 
-This project builds a binary sentiment classifier on the [Amazon Fine Food Reviews](https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews) dataset (568K reviews). The pipeline covers the full NLP workflow: text preprocessing, TF-IDF feature engineering, class imbalance handling, model training and evaluation, threshold tuning, and soft-voting ensemble. A companion academic paper (`paper/amazon_sentiment_paper.pdf`) documents the methodology and findings in depth.
+This project builds a binary sentiment classifier on the Amazon Fine Food Reviews dataset (568K reviews). The pipeline covers the full NLP workflow: text preprocessing, TF-IDF feature engineering, class imbalance handling, model training and evaluation, threshold tuning, and soft-voting ensemble. A companion academic paper (`paper/amazon_sentiment_paper.pdf`) documents the methodology and findings in depth.
 
 ---
 
@@ -33,7 +33,7 @@ amazon-food-review-sentiment/
 └── README.md
 ```
 
-> **Raw data not included.** Download `Reviews.csv` from [Kaggle](https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews) and place it in `data/` to re-run the full pipeline from scratch. `cleaned_data.xlsx` is provided for convenience.
+> **Raw data not included.** The source dataset (`Reviews.csv`) is not stored in this repository due to size. `cleaned_data.xlsx` is provided and is sufficient to re-run all modeling steps directly.
 
 ---
 
@@ -41,7 +41,7 @@ amazon-food-review-sentiment/
 
 | Property | Value |
 |---|---|
-| Source | Amazon Fine Food Reviews (Kaggle / SNAP) |
+| Source | Amazon Fine Food Reviews (SNAP Stanford) |
 | Total Records | 568,454 reviews |
 | Label | Positive (Score > 3) / Negative (Score < 3); Score = 3 excluded |
 | Class Distribution | Positive 78.1% / Negative 21.9% (imbalanced) |
@@ -113,9 +113,8 @@ pip install pandas numpy nltk scikit-learn imbalanced-learn matplotlib seaborn w
 ```
 
 **Steps:**
-1. (Optional) Download `Reviews.csv` from [Kaggle](https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews) and place in `data/` to run from raw data
-2. Open `notebooks/amazon_food_review_final.ipynb`
-3. Run cells in order
+1. Open `notebooks/amazon_food_review_final.ipynb`
+2. Run cells in order (`cleaned_data.xlsx` is included — no additional data download required)
 
 ---
 
@@ -139,6 +138,8 @@ pip install pandas numpy nltk scikit-learn imbalanced-learn matplotlib seaborn w
 
 本项目基于亚马逊精选食品评论数据集（568K 条），构建二分类情感分析流水线，通过评论文本预测用户情感（正面/负面）。完整覆盖 NLP 工作流：文本预处理、TF-IDF 特征工程、标签不平衡处理、模型训练与评估、阈值调优与集成学习。配套学术报告详见 `paper/amazon_sentiment_paper.pdf`。
 
+该数据集来源于 SNAP Stanford，包含真实电商平台的用户评论，具有典型的文本噪声和类别不平衡特征，适合模拟真实业务场景下的 NLP 分类任务。
+
 ---
 
 ### 项目结构
@@ -159,7 +160,7 @@ amazon-food-review-sentiment/
 └── README.md
 ```
 
-> **原始数据未包含。** 如需从头运行完整流水线，请从 [Kaggle](https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews) 下载 `Reviews.csv` 放入 `data/` 目录。`cleaned_data.xlsx` 已提供供直接使用。
+> **原始数据未包含。** 原始 `Reviews.csv` 因体积过大未纳入仓库。`cleaned_data.xlsx` 已提供，可直接用于所有建模步骤，无需额外下载。
 
 ---
 
@@ -167,7 +168,7 @@ amazon-food-review-sentiment/
 
 | 属性 | 说明 |
 |---|---|
-| 来源 | Amazon Fine Food Reviews（Kaggle / SNAP） |
+| 来源 | Amazon Fine Food Reviews（SNAP Stanford） |
 | 总量 | 568,454 条评论 |
 | 标签 | 正类 Score > 3，负类 Score < 3，Score = 3 排除 |
 | 类别分布 | 正类 78.1% / 负类 21.9%（显著不平衡） |
@@ -233,9 +234,8 @@ amazon-food-review-sentiment/
 pip install pandas numpy nltk scikit-learn imbalanced-learn matplotlib seaborn wordcloud joblib tqdm openpyxl
 ```
 
-1. （可选）从 [Kaggle](https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews) 下载 `Reviews.csv` 放入 `data/`
-2. 打开 `notebooks/amazon_food_review_final.ipynb`
-3. 按顺序运行所有 Cell
+1. 打开 `notebooks/amazon_food_review_final.ipynb`
+2. 按顺序运行所有 Cell（`cleaned_data.xlsx` 已包含，无需额外下载）
 
 ---
 
