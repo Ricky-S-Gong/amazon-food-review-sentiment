@@ -19,7 +19,7 @@ amazon-food-review-sentiment/
 ├── notebooks/
 │   └── amazon_food_review_final.ipynb   # Main analysis notebook
 ├── data/
-│   └── cleaned_data.xlsx                # Preprocessed dataset (derived from Kaggle source)
+│   └── cleaned_data.xlsx                # Preprocessed dataset
 ├── models/
 │   └── best_logistic_model.pkl          # Best trained model (LR + Balanced + ElasticNet)
 ├── paper/
@@ -150,7 +150,7 @@ amazon-food-review-sentiment/
 ├── notebooks/
 │   └── amazon_food_review_final.ipynb   # 主分析 notebook
 ├── data/
-│   └── cleaned_data.xlsx                # 预处理后的数据集（来源于 Kaggle）
+│   └── cleaned_data.xlsx                # 预处理后的数据集
 ├── models/
 │   └── best_logistic_model.pkl          # 最优模型（LR + Balanced + ElasticNet）
 ├── paper/
