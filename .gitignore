@@ -1,0 +1,68 @@
+# Large data files (raw source — too large, public on Kaggle)
+data/Reviews.csv
+data/Reviews.xlsx
+# Cleaned CSV too large for GitHub (>100 MB) — use cleaned_data.xlsx instead
+data/cleaned_data.csv
+
+# Large model/matrix files (>100 MB — regenerate from notebook)
+models/X_train_reduced.pkl
+models/X_test_reduced.pkl
+models/X_tfidf.pkl
+models/voting_classifier_model.pkl
+# Kept: best_logistic_model.pkl, best_rf.pkl (under 100 MB)
+
+# Proprietary / third-party files
+docs/
+notebooks/ztgg_*
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# LaTeX build artifacts (keep PDF, ignore aux files)
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.lof
+paper/*.lot
+paper/*.bbl
+paper/*.blg
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+
+# Claude internal
+.claude/
